@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin : Endpoint-List1</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      gap: 10px;
+    }
+    .left-panel {
+      width: 50%
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    .right-panel {
+      width: 60%
+      border-collapse: collapse;
+    }
+    tr {
+      border-bottom: 1px solid #ddd;
+    }
+    td {
+      padding: 0px;
+    }
+    .td_title {
+      background-color: #00eaff;
+    }
+    .textarea1 {
+      width: 100%;
+      height: 50px;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+    .textarea2 {
+      width: 100%;
+      height: 550px;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+<th:block th:replace="/fragments/header"></th:block>
+<H1>Keycloak Role Test Site-1 : Keycloak - Endpoint List</H1>
+<BR>
+<div class="container">
+  <div class="left-panel">
+    <table>
+      <tr><td colspan="2" class="td_title"><label>1.token_endpoint (토큰정보 조회)</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri" name="token_uri" size="50" value="/protocol/openid-connect/token" /></td></tr>
+      <tr><td>grant_type   </td><td><input type="text" id="grant_type" name="grant_type" size="50" value="client_credentials" /></td></tr>
+      <tr><td>client_id    </td><td><input type="text" id="client_id" name="client_id" size="50" value="sso-test-site1" /></td></tr>
+      <tr><td>client_secret</td><td><input type="text" id="client_secret" name="client_secret" size="50" value="client_credentials" /></td></tr>
+      <tr><td>scope        </td><td><input type="text" id="scope" name="scope" size="50" value="openid email profile" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getToken()">전송</button> <span id="http_code"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+    </table>
+  </div>
+
+  <div class="right-panel">
+    <H2>JWT 디코더</H2>
+
+    <label for="jwtInput">JWT Encode:</label>
+    <textarea class="textarea1" id="jwtInput"></textarea>
+
+    <label for="resultOutput">JWT Decode:</label>
+    <textarea class="textarea2" id="resultOutput"></textarea>
+  </div>
+</div>
+
+<script>
+  function getToken() {
+    var keycloak_url = "http://220.70.29.208:30000/realms/SSO_TEST";
+    var token_uri = $('#token_uri').val();
+    var params = {};
+    params.grant_type = $('#grant_type').val();
+    params.grant_type = $('#grant_type').val();
+    params.grant_type = $('#grant_type').val();
+
+    var access_token = getCookie('access_token');
+    var url = keycloak_url + token_uri;
+
+    $.ajax({
+        url: url,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Bearer ' + access_token
+        },
+        data: params,
+        success: function(data, status, xhr) {
+            $('#http_code').text(status);
+            console.log('data=' + JSON.stringify(data));
+            //
+            $('#jwtInput').empty();
+            $('#resultOutput').empty();
+            //
+            var result = decodeJWT("jwtInput");
+            $('#resultOutput').text(result);
+        },
+        error: function(data, status, err) {
+            $('#http_code').text(status+':'+err);
+            console.log(err);
+        }
+    });
+  }
+
+  function base64UrlDecode(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = str.length % 4;
+    if (pad) str += '='.repeat(4 - pad);
+    try {
+      return decodeURIComponent(escape(atob(str)));
+    } catch (e) {
+      return '[디코딩 실패]';
+    }
+  }
+
+  function decodeJWT(encoded_field) {
+    const input = document.getElementById(encoded_field).value.trim();
+    var result = '';
+
+    if (!input) {
+      return '⚠️ JWT 토큰을 입력해주세요.';
+    }
+
+    const parts = input.split('.');
+    if (parts.length !== 3) {
+      return '⚠️ JWT는 3개의 점(.)으로 구분된 문자열이어야 합니다.';
+    }
+
+    try {
+      const header = JSON.parse(base64UrlDecode(parts[0]));
+      const payload = JSON.parse(base64UrlDecode(parts[1]));
+
+      result =
+        '📌 [Header]\n' +
+        JSON.stringify(header, null, 2) +
+        '\n\n📌 [Payload]\n' +
+        JSON.stringify(payload, null, 2);
+    } catch (e) {
+      result = '❌ JSON 파싱 오류: 잘못된 JWT 토큰입니다.';
+    }
+    return result;
+  }
+
+  function getCookie(name) {
+    var value = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return value ? unescape(value[2]) : null;
+  }
+</script>
+</body>
+</html>

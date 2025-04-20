@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWT 디코더 (오프라인)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .textareaInput {
+      width: 100%;
+      height: 100px;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+    .textareaOutput {
+      width: 100%;
+      height: 400px;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<th:block th:replace="/fragments/header"></th:block>
+
+<h2>🛠 JWT 디코더 (오프라인)</h2>
+
+<label for="jwtInput">JWT 토큰 입력:</label>
+<textarea class="textareaInput" id="jwtInput" placeholder="여기에 JWT 토큰을 붙여넣으세요"></textarea>
+<button onclick="decodeJWT()">🔍 디코딩</button>
+
+<label for="resultOutput">📄 디코딩 결과:</label>
+<textarea class="textareaOutput" id="resultOutput" readonly placeholder="여기에 결과가 표시됩니다"></textarea>
+
+<script>
+  function base64UrlDecode(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = str.length % 4;
+    if (pad) str += '='.repeat(4 - pad);
+    try {
+      return decodeURIComponent(escape(atob(str)));
+    } catch (e) {
+      return '[디코딩 실패]';
+    }
+  }
+
+  function decodeJWT() {
+    const input = document.getElementById('jwtInput').value.trim();
+    const resultArea = document.getElementById('resultOutput');
+
+    if (!input) {
+      resultArea.value = '⚠️ JWT 토큰을 입력해주세요.';
+      return;
+    }
+
+    const parts = input.split('.');
+    if (parts.length !== 3) {
+      resultArea.value = '⚠️ JWT는 3개의 점(.)으로 구분된 문자열이어야 합니다.';
+      return;
+    }
+
+    try {
+      const header = JSON.parse(base64UrlDecode(parts[0]));
+      const payload = JSON.parse(base64UrlDecode(parts[1]));
+
+      resultArea.value =
+        '📌 [Header]\n' +
+        JSON.stringify(header, null, 2) +
+        '\n\n📌 [Payload]\n' +
+        JSON.stringify(payload, null, 2);
+    } catch (e) {
+      resultArea.value = '❌ JSON 파싱 오류: 잘못된 JWT 토큰입니다.';
+    }
+  }
+</script>
+</body>
+</html>

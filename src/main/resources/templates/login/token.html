@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Token</title>
+</head>
+<body>
+<th:block th:replace="/fragments/header"></th:block>
+<div class="container">
+    <h1>Token Info</h1>
+    User-ID :<BR>
+    <input type="text" id="userId" name="userId" size="100" readonly /> <BR>
+    User-Name :<BR>
+    <input type="text" id="userName" name="userName" size="100" readonly /> <BR>
+    Access-Token :<BR>
+    <textarea aria-readonly="true" id="access_token" name="access_token" cols="100" rows="2"></textarea> <BR>
+    Access-Token (Decoded) :<BR>
+    <textarea aria-readonly="true" id="decoded_access_token" name="decoded_access_token" cols="100" rows="12"></textarea> <BR>
+    Request-Party-Token (권한토큰) :<BR>
+    <textarea aria-readonly="true" id="rp_token" name="rp_token" cols="100" rows="12"></textarea> <BR>
+    ID-Token :<BR>
+    <textarea aria-readonly="true" id="id_token" name="id_token" cols="100" rows="2"></textarea> <BR>
+    ID-Token (Decoded) :<BR>
+    <textarea aria-readonly="true" id="decoded_id_token" name="decoded_id_token" cols="100" rows="12"></textarea> <BR>
+    Refresh-Token :<BR>
+    <textarea aria-readonly="true" id="refresh_token" name="refresh_token" cols="100" rows="2"></textarea> <BR>
+    Refresh-Token (Decoded) :<BR>
+    <textarea aria-readonly="true" id="decoded_refresh_token" name="decoded_refresh_token" cols="100" rows="12"></textarea> <BR>
+</div>
+
+<script>
+    $.ajax({
+        url: '/get-token',
+        method: 'POST',
+        success: function(data, status, xhr) {
+            console.log('data=' + JSON.stringify(data));
+            //
+            $('#id_token').empty();
+            $('#access_token').empty();
+            $('#refresh_token').empty();
+            $('#rp_token').empty();
+            //
+            $('#userId').val(data.userId);
+            $('#userName').val(data.userName);
+            $('#id_token').text(data.id_token);
+            $('#access_token').text(data.access_token);
+            $('#refresh_token').text(data.refresh_token);
+
+            //
+            decodeJWT("id_token", "decoded_id_token");
+            decodeJWT("access_token", "decoded_access_token");
+            decodeJWT("refresh_token", "decoded_refresh_token");
+
+            try {
+                console.log('rp_token1=' + data.rp_token);
+                console.log('rp_token1=' + JSON.stringify(data.rp_token));
+                const pretty = js_beautify(JSON.stringify(data.rp_token, null, 2));
+                $('#rp_token').text(pretty);
+                console.log('rp_token2=' + pretty);
+            } catch(e) {
+                $('#rp_token').text('*** Invalid JSON ***');
+            }
+        },
+        error: function(data, status, xhr) {
+            console.log(err);
+        }
+    });
+
+    function base64UrlDecode(str) {
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = str.length % 4;
+      if (pad) str += '='.repeat(4 - pad);
+      try {
+        return decodeURIComponent(escape(atob(str)));
+      } catch (e) {
+        return '[디코딩 실패]';
+      }
+    }
+
+    function decodeJWT(encoded_field, decoded_field) {
+      const input = document.getElementById(encoded_field).value.trim();
+      const resultArea = document.getElementById(decoded_field);
+
+      if (!input) {
+        resultArea.value = '⚠️ JWT 토큰을 입력해주세요.';
+        return;
+      }
+
+      const parts = input.split('.');
+      if (parts.length !== 3) {
+        resultArea.value = '⚠️ JWT는 3개의 점(.)으로 구분된 문자열이어야 합니다.';
+        return;
+      }
+
+      try {
+        const header = JSON.parse(base64UrlDecode(parts[0]));
+        const payload = JSON.parse(base64UrlDecode(parts[1]));
+
+        resultArea.value =
+          '📌 [Header]\n' +
+          JSON.stringify(header, null, 2) +
+          '\n\n📌 [Payload]\n' +
+          JSON.stringify(payload, null, 2);
+      } catch (e) {
+        resultArea.value = '❌ JSON 파싱 오류: 잘못된 JWT 토큰입니다.';
+      }
+    }
+</script>
+</body>
+</html>

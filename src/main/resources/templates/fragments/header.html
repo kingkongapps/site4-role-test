@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- js-beautify -->
+    <script src="/js/js-beautify/beautify.js"></script>
+    <script src="/js/js-beautify/beautify-html.js"></script>
+    <script src="/js/js-beautify/beautify-css.js"></script>
+<style>
+    nav.navbar {
+        position: fixed; /* 헤더를 상단에 고정 */
+        top: 0;
+        left: 0;
+        width: 100%; /* 전체 너비 */
+        z-index: 1000; /* 다른 요소 위에 표시 */
+    }
+    body {
+        padding-top: 60px; /* 헤더 높이만큼 여백 추가 */
+    }
+</style>
+</head>
+<body>
+<div th:fragment="header">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="/">Role Test(Site-1)</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/admin-test1">Admin-Test1</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/admin-test2">Admin-Test2</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/user-test1">User-Test1</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/user-test2">User-Test2</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/jwt-decode">JWT 디코더</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/endpoint-list">Keycloak-Endpoints</a>
+                </li>
+            </ul>
+
+            &nbsp;
+            <li sec:authorize="isAuthenticated()"><a href="/login/profile">Hello, <span sec:authentication="principal.givenName"></span> (<span sec:authentication="principal.preferredUsername"></span>) 님 !!!</a></li>
+            &nbsp;
+            <a sec:authorize="isAnonymous()" class="btn btn-outline-info my-2 my-sm-0 btn-sm" href="/login2">Login</a>
+            &nbsp;
+            <a sec:authorize="isAuthenticated()" class="btn btn-outline-danger my-2 my-sm-0 btn-sm" href="/logout">Logout</a>
+        </div>
+    </nav>
+</div>
+</body>
+</html>
