@@ -93,9 +93,9 @@ public class TokenRestController {
 //        return null;
 //    }
 
-    @PostMapping(value = "/protocol/openid-connect/token/inspect")
-    public ResponseEntity<Map> getInspect(Authentication authentication) {
-        System.out.println("getInspect().......");
+    @PostMapping(value = "/protocol/openid-connect/token/introspect")
+    public ResponseEntity<Map> getIntrospect(Authentication authentication) {
+        System.out.println("getIntrospect().......");
 
         Map result = new HashMap();
         try {

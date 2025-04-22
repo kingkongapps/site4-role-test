@@ -2,6 +2,8 @@ package com.example.keycloak.site4_role_test.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +38,10 @@ public class PageController {
     @GetMapping(value = "/admin/admin-test1")
     public String goAdminTest1(HttpServletRequest request, Model model) {
         System.out.println("goAdminTest1()...");
+
+        // for ContextHolder debug...
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object pricipal = authentication.getPrincipal();
 
         //
         model.addAttribute("SITE_URL1", siteUrl1);

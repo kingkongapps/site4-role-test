@@ -62,11 +62,54 @@
       <tr><td colspan="2" class="td_title"><label>1.token_endpoint (토큰정보 조회)</label></td></tr>
       <tr><td>token_uri    </td><td><input type="text" id="token_uri" name="token_uri" size="50" value="/protocol/openid-connect/token" /></td></tr>
       <tr><td>grant_type   </td><td><input type="text" id="grant_type" name="grant_type" size="50" value="client_credentials" /></td></tr>
-      <tr><td>client_id    </td><td><input type="text" id="client_id" name="client_id" size="50" value="sso-test-site1" /></td></tr>
-      <tr><td>client_secret</td><td><input type="text" id="client_secret" name="client_secret" size="50" value="client_credentials" /></td></tr>
+      <tr><td>client_id    </td><td><input type="text" id="client_id" name="client_id" size="50" value="role-test-site1" /></td></tr>
+      <tr><td>client_secret</td><td><input type="text" id="client_secret" name="client_secret" size="50" value="Wt2xsU5UMSpXIblwQkWklhoXWQQ17nfN" /></td></tr>
       <tr><td>scope        </td><td><input type="text" id="scope" name="scope" size="50" value="openid email profile" /></td></tr>
       <tr><td>&nbsp;</td><td><button onclick="getToken()">전송</button> <span id="http_code"></span></td></tr>
       <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>2.userinfo_endpoint (사용자정보 조회)</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri2" name="token_uri2" size="50" value="/protocol/openid-connect/userinfo" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getUserInfo()">전송</button> <span id="http_code2"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>3.Get Certificate (인증서 조회)</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri3" name="token_uri3" size="50" value="/protocol/openid-connect/certs" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getCert()">전송</button> <span id="http_code3"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>4.introspection_endpoint (AccessToken 검증)</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri4" name="token_uri4" size="50" value="/protocol/openid-connect/token/introspect" /></td></tr>
+      <tr><td>client_id    </td><td><input type="text" id="client_id4" name="client_id4" size="50" value="role-test-site1" /></td></tr>
+      <tr><td>client_secret</td><td><input type="text" id="client_secret4" name="client_secret4" size="50" value="Wt2xsU5UMSpXIblwQkWklhoXWQQ17nfN" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getIntrospect()">전송</button> <span id="http_code4"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>5.device_authorization_endpoint</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri5" name="token_uri5" size="50" value="/protocol/openid-connect/auth/device" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getCert()">전송</button> <span id="http_code5"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>6.pushed_authorization_request_endpoint</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri6" name="token_uri6" size="50" value="/protocol/openid-connect/ext/par/request" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getCert()">전송</button> <span id="http_code6"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>7.backchannel_authorization_endpoint</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri7" name="token_uri7" size="50" value="/protocol/openid-connect/ext/ciba/auth" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getCert()">전송</button> <span id="http_code7"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>8.revocation_endpoint</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri8" name="token_uri8" size="50" value="/protocol/openid-connect/revoke" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getCert()">전송</button> <span id="http_code8"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
+      <tr><td colspan="2" class="td_title"><label>9.registration_endpoint</label></td></tr>
+      <tr><td>token_uri    </td><td><input type="text" id="token_uri9" name="token_uri9" size="50" value="/clients-registrations/openid-connect" /></td></tr>
+      <tr><td>&nbsp;</td><td><button onclick="getCert()">전송</button> <span id="http_code9"></span></td></tr>
+      <tr><td colspan="2">&nbsp;</td> </tr>
+
     </table>
   </div>
 
@@ -82,85 +125,192 @@
 </div>
 
 <script>
-  function getToken() {
-    var keycloak_url = "http://220.70.29.208:30000/realms/SSO_TEST";
-    var token_uri = $('#token_uri').val();
-    var params = {};
-    params.grant_type = $('#grant_type').val();
-    params.grant_type = $('#grant_type').val();
-    params.grant_type = $('#grant_type').val();
+var keycloak_url = "http://220.70.29.208:30000/realms/ROLE-TEST";
 
-    var access_token = getCookie('access_token');
-    var url = keycloak_url + token_uri;
+function getToken() {
+  var token_uri = $('#token_uri').val();
+  var params = {};
+  params.grant_type    = $('#grant_type').val();
+  params.client_id     = $('#client_id').val();
+  params.client_secret = $('#client_secret').val();
+  params.scope         = $('#scope').val();
 
-    $.ajax({
-        url: url,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Bearer ' + access_token
-        },
-        data: params,
-        success: function(data, status, xhr) {
-            $('#http_code').text(status);
-            console.log('data=' + JSON.stringify(data));
-            //
-            $('#jwtInput').empty();
-            $('#resultOutput').empty();
-            //
-            var result = decodeJWT("jwtInput");
-            $('#resultOutput').text(result);
-        },
-        error: function(data, status, err) {
-            $('#http_code').text(status+':'+err);
-            console.log(err);
-        }
-    });
+  var access_token = getCookie('access_token');
+  var url = keycloak_url + token_uri;
+
+  $.ajax({
+      url: url,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Bearer ' + access_token
+      },
+      data: params,
+      success: function(data, status, xhr) {
+          $('#http_code').text(status);
+          console.log('data=' + JSON.stringify(data));
+          //
+          $('#jwtInput').empty();
+          $('#resultOutput').empty();
+          //
+          $('#jwtInput').text(data.access-token);
+          var result = decodeJWT("jwtInput");
+          $('#resultOutput').text(result);
+      },
+      error: function(data, status, err) {
+          $('#http_code').text(status+':'+err);
+          console.log(err);
+      }
+  });
+}
+
+function getUserInfo() {
+  var token_uri = $('#token_uri2').val();
+  var access_token = getCookie('access_token');
+
+  var url = keycloak_url + token_uri;
+
+  $.ajax({
+      url: url,
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      },
+      data: params,
+      success: function(data, status, xhr) {
+          $('#http_code2').text(status);
+          //
+          $('#jwtInput').empty();
+          try {
+            const pretty = js_beautify(JSON.stringify(data, null, 2));
+            $('#resultOutput').text(pretty);
+            console.log('userinfo=' + pretty);
+          } catch(e) {
+            $('#resultOutput').text('*** Invalid JSON ***');
+          }
+      },
+      error: function(data, status, err) {
+          $('#http_code2').text(status+':'+err);
+          console.log(err);
+      }
+  });
+}
+
+function getCert() {
+  var token_uri = $('#token_uri3').val();
+  var access_token = getCookie('access_token');
+
+  var url = keycloak_url + token_uri;
+
+  $.ajax({
+      url: url,
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      },
+      data: params,
+      success: function(data, status, xhr) {
+          $('#http_code3').text(status);
+          //
+          $('#jwtInput').empty();
+          try {
+            const pretty = js_beautify(JSON.stringify(data, null, 2));
+            $('#resultOutput').text(pretty);
+            console.log('userinfo=' + pretty);
+          } catch(e) {
+            $('#resultOutput').text('*** Invalid JSON ***');
+          }
+      },
+      error: function(data, status, err) {
+          $('#http_code3').text(status+':'+err);
+          console.log(err);
+      }
+  });
+}
+
+function getIntrospect() {
+  var introspect_entpoint = $('#token_uri4').val();
+  var client_id     = $('#client_id4').val();
+  var client_secret = $('#client_secret4').val();
+  var access_token  = getCookie('access_token');
+
+  var params = {};
+  params.token = access_token;
+
+  // keycloak_url 로 바로 호출하면 CORS 오류가 발생함, (KEYCLOAK이 막음)
+  // 따라서 Backend로 넘겨서 Controller에서 inspect를 호출하고 결과를 리턴하는 식으로 변경...
+
+  var url = introspect_entpoint;
+  $.ajax({
+      url: url,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + btoa(client_id + ":" + client_secrete)
+      },
+      data: params,
+      success: function(data, status, xhr) {
+          $('#http_code4').text(status);
+          //
+          $('#jwtInput').empty();
+          try {
+            const pretty = js_beautify(JSON.stringify(data.data, null, 2));
+            $('#resultOutput').text(pretty);
+            console.log('userinfo=' + pretty);
+          } catch(e) {
+            $('#resultOutput').text('*** Invalid JSON ***');
+          }
+      },
+      error: function(data, status, err) {
+          $('#http_code3').text(status+':'+err);
+          console.log(err);
+      }
+  });
+}
+
+function base64UrlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = str.length % 4;
+  if (pad) str += '='.repeat(4 - pad);
+  try {
+    return decodeURIComponent(escape(atob(str)));
+  } catch (e) {
+    return '[디코딩 실패]';
+  }
+}
+
+function decodeJWT(encoded_field) {
+  const input = document.getElementById(encoded_field).value.trim();
+  var result = '';
+
+  if (!input) {
+    return '⚠️ JWT 토큰을 입력해주세요.';
   }
 
-  function base64UrlDecode(str) {
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
-    const pad = str.length % 4;
-    if (pad) str += '='.repeat(4 - pad);
-    try {
-      return decodeURIComponent(escape(atob(str)));
-    } catch (e) {
-      return '[디코딩 실패]';
-    }
+  const parts = input.split('.');
+  if (parts.length !== 3) {
+    return '⚠️ JWT는 3개의 점(.)으로 구분된 문자열이어야 합니다.';
   }
 
-  function decodeJWT(encoded_field) {
-    const input = document.getElementById(encoded_field).value.trim();
-    var result = '';
+  try {
+    const header = JSON.parse(base64UrlDecode(parts[0]));
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
 
-    if (!input) {
-      return '⚠️ JWT 토큰을 입력해주세요.';
-    }
-
-    const parts = input.split('.');
-    if (parts.length !== 3) {
-      return '⚠️ JWT는 3개의 점(.)으로 구분된 문자열이어야 합니다.';
-    }
-
-    try {
-      const header = JSON.parse(base64UrlDecode(parts[0]));
-      const payload = JSON.parse(base64UrlDecode(parts[1]));
-
-      result =
-        '📌 [Header]\n' +
-        JSON.stringify(header, null, 2) +
-        '\n\n📌 [Payload]\n' +
-        JSON.stringify(payload, null, 2);
-    } catch (e) {
-      result = '❌ JSON 파싱 오류: 잘못된 JWT 토큰입니다.';
-    }
-    return result;
+    result =
+      '📌 [Header]\n' +
+      JSON.stringify(header, null, 2) +
+      '\n\n📌 [Payload]\n' +
+      JSON.stringify(payload, null, 2);
+  } catch (e) {
+    result = '❌ JSON 파싱 오류: 잘못된 JWT 토큰입니다.';
   }
+  return result;
+}
 
-  function getCookie(name) {
-    var value = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-    return value ? unescape(value[2]) : null;
-  }
+function getCookie(name) {
+  var value = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return value ? unescape(value[2]) : null;
+}
 </script>
 </body>
 </html>

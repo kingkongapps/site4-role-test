@@ -67,11 +67,8 @@ public class KeycloakAuthorizationInterceptor implements HandlerInterceptor {
         System.out.println("preHandle()::username======" + username);
         System.out.println("preHandle()::accessToken===" + accessToken);
 
-        //CURD 중에 GET ==> READ 로
-        //         POST/PUT/DELETE ==> WRITE 로 scope을 치환..
-        // -> 사유 : scope을 2개만 정의하는 이유는 - 일기 vs (수정/삭제/생성) 2개만 구분해도 충분.. 생성한 사람이 수정도 하고 , 삭제도 하니까...
-        scope = "GET".equals(scope) ? "READ" : "WRITE";
-        // 1. READ RPToken...
+        // scope(GET/POST/PUT/DELETE) 별로 CRUD를 체크할 수 있다.
+        // 1. Get RPToken...
         // 2. Permission Check...
         List<Map<String,String>> rpToken = readRPToken(username, accessToken);
         if( checkPermission(rpToken, resource, scope)) {
@@ -150,19 +147,19 @@ public class KeycloakAuthorizationInterceptor implements HandlerInterceptor {
             System.out.print(" ===> pattern 일치??? [" + resource + "] vs [" + regex + "]");
             if( resource.matches(regex) ) {
                 System.out.println(" ===> pattern 일치 (OK)");
-                if( "READ".equals(scope) ) {
-                    System.out.println(" ===> READ scope 일치..." + scope);
-                    return true;
-                } else if ("WRITE".equals(scope)) {
+//                if( "READ".equals(scope) ) {
+//                    System.out.println(" ===> READ scope 일치..." + scope);
+//                    return true;
+//                } else if ("WRITE".equals(scope)) {
                     Object scopes = perm.get("scopes");
                     if( scopes.toString().indexOf(scope)>=0 ) {
-                        System.out.println(" ===> WRITE scope 일치 ... " + scopes + " vs " + scope);
+                        System.out.println(" ===> scope.. 일치... " + scopes + " vs " + scope);
                         return true;
                     } else {
-                        System.out.println(" ===> WRITE scope 불일치 ... XXXXXXXXXXXXXX");
+                        System.out.println(" ===> scope.. 불일치. " + scopes + " vs " + scope + " ... XXXXXXXXXXXXXX");
                         return false;
                     }
-                }
+//                }
             }
             System.out.println(" ===> pattern 불칠치 ... XXXXXXXXXXXXXX");
         }

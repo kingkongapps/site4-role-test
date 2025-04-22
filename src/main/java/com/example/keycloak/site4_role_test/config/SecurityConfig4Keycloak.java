@@ -11,19 +11,26 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Configuration
 @EnableWebSecurity
@@ -73,7 +80,11 @@ public class SecurityConfig4Keycloak {
                 )
                 // OAuth2 로그인 처리 (Keycloak 로그인 페이지로 리다이렉션)
                 .oauth2Login(Customizer.withDefaults())
-                .oauth2Login(oauth2 -> oauth2.successHandler(successHandler()))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(successHandler())
+                        .userInfoEndpoint(userInfo -> userInfo.userAuthoritiesMapper(this.customUserAuthoritiesMapper()))
+                        .userInfoEndpoint(userInfo -> userInfo.userService(this.customOAuth2UserService()))
+                )
                 // 리소스 서버로서 JWT 토큰 검증
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -165,5 +176,42 @@ public class SecurityConfig4Keycloak {
         response.addCookie(cookieRefreshToken);
 //        response.addCookie(cookieRPToken);
         response.addCookie(cookieUserId);
+    }
+
+    private GrantedAuthoritiesMapper customUserAuthoritiesMapper() {
+        return authorities -> {
+            Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
+
+            for(GrantedAuthority authority : authorities ) {
+                //ROLE_
+                if( authority.getAuthority().startsWith("ROLE_")) {
+                    mappedAuthorities.add(authority);
+                } else {
+                    mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_"+ authority.getAuthority()));
+                }
+            }
+            return mappedAuthorities;
+        };
+    }
+
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService() {
+        return userRequest -> {
+            DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
+            OAuth2User oAuth2User = delegate.loadUser(userRequest);
+            Map<String,Object> attributes = oAuth2User.getAttributes();
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            //
+            String clientId = userRequest.getClientRegistration().getClientId();
+            Map<String,Object> resourceAccess = (Map<String,Object>) attributes.get("resource_access");
+
+            if( resourceAccess != null && resourceAccess.get(clientId) instanceof List ) {
+                List<String> roles = (List<String>) resourceAccess.get("roles");
+                for(String role : roles) {
+                    System.out.println("role=" + role.toUpperCase());
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                }
+            }
+            return new DefaultOAuth2User(authorities, attributes, "preferred_username");
+        };
     }
 }
