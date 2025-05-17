@@ -36,26 +36,26 @@
                 <li class="nav-item active">
                     <a class="nav-link" href="/">Home</a>
                 </li>
-                <li class="nav-item">
+                <li sec:authorize="hasAnyRole('ROLE_SITE1_ADMIN')" class="nav-item">
                     <a class="nav-link" href="/admin/admin-test1">Admin-Test1</a>
                 </li>
-                <li class="nav-item">
+                <li sec:authorize="hasAnyRole('ROLE_SITE1_ADMIN')" class="nav-item">
                     <a class="nav-link" href="/admin/admin-test2">Admin-Test2</a>
                 </li>
-                <li class="nav-item">
+                <li sec:authorize="hasAnyRole('ROLE_SITE1_ADMIN', 'ROLE_SITE1_USER')" class="nav-item">
                     <a class="nav-link" href="/user/user-test1">User-Test1</a>
                 </li>
-                <li class="nav-item">
+                <li sec:authorize="hasAnyRole('ROLE_SITE1_ADMIN', 'ROLE_SITE1_USER')" class="nav-item">
                     <a class="nav-link" href="/user/user-test2">User-Test2</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/jwt-decode">JWT 디코더</a>
                 </li>
-                <li class="nav-item">
+                <li sec:authorize="hasAnyRole('ROLE_SITE1_ADMIN')" class="nav-item">
                     <a class="nav-link" href="/admin/endpoint-list">Keycloak-Endpoints</a>
                 </li>
             </ul>
-
+j
             &nbsp;
             <li sec:authorize="isAuthenticated()"><a href="/login/profile">Hello, <span sec:authentication="principal.givenName"></span> (<span sec:authentication="principal.preferredUsername"></span>) 님 !!!</a></li>
             &nbsp;

@@ -40,43 +40,43 @@ public class KeycloakUtil {
     }
 
 
-    public static List<Map<String,String>> getRPToken(String tokenEndpoint, String clientId, String accessToken) {
-        System.out.println("tokenEndpoint=" + tokenEndpoint);
+public static List<Map<String,String>> getRPToken(String tokenEndpoint, String clientId, String accessToken) {
+    System.out.println("tokenEndpoint=" + tokenEndpoint);
+    //
+    try(CloseableHttpClient client = HttpClients.createDefault()) {
+        HttpPost post = new HttpPost(tokenEndpoint);
+        post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        post.setHeader("Authorization", "Bearer " + accessToken);
+
         //
-        try(CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost(tokenEndpoint);
-            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
-            post.setHeader("Authorization", "Bearer " + accessToken);
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket"));
+        params.add(new BasicNameValuePair("audience", clientId));
+        params.add(new BasicNameValuePair("response_mode", "permissions"));
 
-            //
-            List<BasicNameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket"));
-            params.add(new BasicNameValuePair("audience", clientId));
-            params.add(new BasicNameValuePair("response_mode", "permissions"));
+        post.setEntity(new UrlEncodedFormEntity(params));
 
-            post.setEntity(new UrlEncodedFormEntity(params));
-
-            return client.execute(post, httpResponse -> {
-                System.out.println("HTTP_CODE==" + httpResponse.getStatusLine().getStatusCode());
-                System.out.println("HTTP_ERROR=" + httpResponse.getStatusLine().getReasonPhrase());
-                if( httpResponse.getStatusLine().getStatusCode() == 200 ) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    List<Map<String, String>> list = mapper.readValue(httpResponse.getEntity().getContent(), List.class);
-                    //permission만 문자로 보낼때... 그러나 list 객체로 반환한다...
+        return client.execute(post, httpResponse -> {
+            System.out.println("HTTP_CODE==" + httpResponse.getStatusLine().getStatusCode());
+            System.out.println("HTTP_ERROR=" + httpResponse.getStatusLine().getReasonPhrase());
+            if( httpResponse.getStatusLine().getStatusCode() == 200 ) {
+                ObjectMapper mapper = new ObjectMapper();
+                List<Map<String, String>> list = mapper.readValue(httpResponse.getEntity().getContent(), List.class);
+                //permission만 문자로 보낼때... 그러나 list 객체로 반환한다...
 //                    String permissions = mapper.readValue(httpResponse.getEntity().getContent(), String.class);
-                    for(Map map : list) {
-                        System.out.println("map=" + map.toString());
-                    }
-                    return list;
-                } else {
-                    return null;
+                for(Map map : list) {
+                    System.out.println("map=" + map.toString());
                 }
-            });
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
+                return list;
+            } else {
+                return null;
+            }
+        });
+    } catch (Exception e) {
+        System.out.println(e.getMessage());
     }
+    return null;
+}
 
     public static String getRPT_restTemplate(RestTemplate restTemplate, String tokenEndpoint, String clientId, String accessToken) {
         System.out.println("tokenEndpoint=" + tokenEndpoint);
@@ -121,6 +121,31 @@ public class KeycloakUtil {
 
         // 4. kid 추출
         return header.getAsString("kid");
+    }
+
+    public static Object getClientRoles(String accessToken, String clientId) throws Exception {
+        if( accessToken == null ) return null;
+
+        // 1. 토큰을 . 으로 분리 (Header.Payload.Signature)
+        String[] parts = accessToken.split("\\.");
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("잘못된 JWT 토큰 형식입니다.");
+        }
+        // 2. Payload 부분 Base64 디코딩
+        String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
+
+        // 3. JSON 파싱 (json-simple 사용)
+        JSONParser parser = new JSONParser();
+        JSONObject payload = (JSONObject) parser.parse(payloadJson);
+
+        // 4. resource_access 추출
+        JSONObject resourceAccess = (JSONObject) payload.get("resource_access");
+
+        // 5. client 추출
+        JSONObject roles = (JSONObject) resourceAccess.get(clientId);
+
+        // 6. roles 추출
+        return roles.get("roles");
     }
 
     public static boolean isTokenExpired(String rptToken, PublicKey publicKey) {

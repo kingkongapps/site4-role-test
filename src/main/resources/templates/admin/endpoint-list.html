@@ -125,7 +125,7 @@
 </div>
 
 <script>
-var keycloak_url = "http://220.70.29.208:30000/realms/ROLE-TEST";
+var keycloak_url = "https://www.kingkongapps.kr:30000/realms/ROLE_TEST";
 
 function getToken() {
   var token_uri = $('#token_uri').val();
@@ -153,7 +153,7 @@ function getToken() {
           $('#jwtInput').empty();
           $('#resultOutput').empty();
           //
-          $('#jwtInput').text(data.access-token);
+          $('#jwtInput').text(data.access_token);
           var result = decodeJWT("jwtInput");
           $('#resultOutput').text(result);
       },

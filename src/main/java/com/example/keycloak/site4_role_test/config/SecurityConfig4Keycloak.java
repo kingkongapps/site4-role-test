@@ -17,11 +17,15 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -82,8 +86,14 @@ public class SecurityConfig4Keycloak {
                 .oauth2Login(Customizer.withDefaults())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(successHandler())
-                        .userInfoEndpoint(userInfo -> userInfo.userAuthoritiesMapper(this.customUserAuthoritiesMapper()))
-                        .userInfoEndpoint(userInfo -> userInfo.userService(this.customOAuth2UserService()))
+//                        .userInfoEndpoint(userInfo -> userInfo.userAuthoritiesMapper(this.customUserAuthoritiesMapper()))
+//                        .userInfoEndpoint(userInfo -> userInfo.userService(this.customOAuth2UserService()))
+                        .userInfoEndpoint(userInfo -> userInfo.oidcUserService(new OAuth2UserService<OidcUserRequest, OidcUser>() {
+                            @Override
+                            public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
+                                return customOidcUser(userRequest);
+                            }
+                        }))
                 )
                 // 리소스 서버로서 JWT 토큰 검증
                 .logout(logout -> logout
@@ -213,5 +223,26 @@ public class SecurityConfig4Keycloak {
             }
             return new DefaultOAuth2User(authorities, attributes, "preferred_username");
         };
+    }
+
+    private OidcUser customOidcUser(OidcUserRequest userRequest) {
+        OidcUserService delegate = new OidcUserService();
+        OidcUser oidcUser = delegate.loadUser(userRequest);
+        String accessToken = userRequest.getAccessToken().getTokenValue();
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        System.out.println("accessToken=" + accessToken);
+
+        try {
+            List<String> roles = (List<String>) KeycloakUtil.getClientRoles(accessToken, clientId);
+            if( roles != null ) {
+                for(String role : roles) {
+                    System.out.println("ROLE===> " + role.toUpperCase());
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo(), "preferred_username");
     }
 }

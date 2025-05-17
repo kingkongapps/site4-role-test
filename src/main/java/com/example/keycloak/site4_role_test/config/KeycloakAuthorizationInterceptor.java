@@ -84,85 +84,80 @@ public class KeycloakAuthorizationInterceptor implements HandlerInterceptor {
         }
     }
 
-    private List<Map<String,String>> readRPToken(String username, String accessToken) {
-        // Redis cache에서 먼저 읽는다.
-        // Redis cache에 없으면 Keycloak 에서 직접 읽는다.
-        String redisKey = "rpt:" + username;
-        List<Map<String,String>> cachedRptoken = null;
-        boolean IS_REDIS_OK = false;
+private List<Map<String,String>> readRPToken(String username, String accessToken) {
+    // Redis cache에서 먼저 읽는다.
+    // Redis cache에 없으면 Keycloak 에서 직접 읽는다.
+    String redisKey = "rpt:" + username;
+    List<Map<String,String>> cachedRptoken = null;
+    boolean IS_REDIS_OK = false;
 
-        // STEP-1 :: Redis cache READ...
-        try {
-            cachedRptoken = (List<Map<String,String>>) redisTemplate.opsForValue().get(redisKey);
-            IS_REDIS_OK = true;
-        } catch (Exception e) {
-            IS_REDIS_OK = false;
-            System.out.println(e.getMessage());
-        }
-        System.out.println("cachedRptoken=" + cachedRptoken);
+    // STEP-1 :: Redis cache READ...
+    try {
+        cachedRptoken = (List<Map<String,String>>) redisTemplate.opsForValue().get(redisKey);
+        IS_REDIS_OK = true;
+    } catch (Exception e) {
+        IS_REDIS_OK = false;
+        System.out.println(e.getMessage());
+    }
+    System.out.println("cachedRptoken=" + cachedRptoken);
+
+    //
+    if( cachedRptoken == null ) {
+        System.out.println("===> Keycloak RPToken Request..........");
+        System.out.println("===> Keycloak RPToken Request..........");
+        System.out.println("===> Keycloak RPToken Request..........");
+        //
+System.out.println("------------------[ keycloakUtil.getRPToken ]----------------------");
+String tokenEndpoint = jwtIssuerUri + "/protocol/openid-connect/token";
+List<Map<String,String>> rptoken = KeycloakUtil.getRPToken(tokenEndpoint, clientId, accessToken);
+        System.out.println("------------------[ keycloakUtil.getRPToken ]----------------------");
+        System.out.println("username=" + username);
 
         //
-        if( cachedRptoken == null ) {
-            System.out.println("===> Keycloak RPToken Request..........");
-            System.out.println("===> Keycloak RPToken Request..........");
-            System.out.println("===> Keycloak RPToken Request..........");
-            //
-            System.out.println("------------------[ keycloakUtil.getRPToken ]----------------------");
-            String tokenEndpoint = jwtIssuerUri + "/protocol/openid-connect/token";
-            List<Map<String,String>> rptoken = KeycloakUtil.getRPToken(tokenEndpoint, clientId, accessToken);
-            System.out.println("------------------[ keycloakUtil.getRPToken ]----------------------");
-            System.out.println("username=" + username);
-
-            //
-            if( rptoken != null ) {
-                cachedRptoken = rptoken;
-                System.out.println("rptoken=" + rptoken);
-                if( IS_REDIS_OK ) {
-                    try {
-                        redisTemplate.opsForValue().set(redisKey, rptoken, Duration.ofMinutes(5));
-                    } catch (Exception e) {
-                        System.out.println("REDIS_WRITE_FAIL=" + e.getMessage());
-                    }
-                } else {
-                    System.out.println("REDIS_IS_OFF.........SKIP..........");
+        if( rptoken != null ) {
+            cachedRptoken = rptoken;
+            System.out.println("rptoken=" + rptoken);
+            if( IS_REDIS_OK ) {
+                try {
+                    redisTemplate.opsForValue().set(redisKey, rptoken, Duration.ofMinutes(5));
+                } catch (Exception e) {
+                    System.out.println("REDIS_WRITE_FAIL=" + e.getMessage());
                 }
+            } else {
+                System.out.println("REDIS_IS_OFF.........SKIP..........");
             }
-
-        } else {
-            System.out.println("===> RPToken - CACHE READ OK ..........................");
-            System.out.println("===> RPToken - CACHE READ OK ..........................");
-            System.out.println("===> RPToken - CACHE READ OK ..........................");
         }
 
-        return cachedRptoken;
+    } else {
+        System.out.println("===> RPToken - CACHE READ OK ..........................");
+        System.out.println("===> RPToken - CACHE READ OK ..........................");
+        System.out.println("===> RPToken - CACHE READ OK ..........................");
     }
 
-    private boolean checkPermission(List<Map<String,String>> rpToken, String resource, String scope ) {
-        System.out.println("checkPermission()............");
-        for(Map<String,String> perm : rpToken) {
-            String resourcePattern = perm.get("rsname");
-            String regex = resourcePattern.replace("*", ".*");
+    return cachedRptoken;
+}
 
-            //
-            System.out.print(" ===> pattern 일치??? [" + resource + "] vs [" + regex + "]");
-            if( resource.matches(regex) ) {
-                System.out.println(" ===> pattern 일치 (OK)");
-//                if( "READ".equals(scope) ) {
-//                    System.out.println(" ===> READ scope 일치..." + scope);
-//                    return true;
-//                } else if ("WRITE".equals(scope)) {
-                    Object scopes = perm.get("scopes");
-                    if( scopes.toString().indexOf(scope)>=0 ) {
-                        System.out.println(" ===> scope.. 일치... " + scopes + " vs " + scope);
-                        return true;
-                    } else {
-                        System.out.println(" ===> scope.. 불일치. " + scopes + " vs " + scope + " ... XXXXXXXXXXXXXX");
-                        return false;
-                    }
-//                }
+private boolean checkPermission(List<Map<String,String>> rpToken, String resource, String scope ) {
+    System.out.println("checkPermission()............");
+    for(Map<String,String> perm : rpToken) {
+        String resourcePattern = perm.get("rsname");
+        String regex = resourcePattern.replace("*", ".*");
+
+        //
+        System.out.print(" ===> pattern 일치??? [" + resource + "] vs [" + regex + "]");
+        if( resource.matches(regex) ) {
+            System.out.println(" ===> pattern 일치 (OK)");
+            Object scopes = perm.get("scopes");
+            if( scopes.toString().indexOf(scope)>=0 ) {
+                System.out.println(" ===> scope.. 일치... " + scopes + " vs " + scope);
+                return true;
+            } else {
+                System.out.println(" ===> scope.. 불일치. " + scopes + " vs " + scope + " ... XXXXXXXXXXXXXX");
+                return false;
             }
-            System.out.println(" ===> pattern 불칠치 ... XXXXXXXXXXXXXX");
         }
-        return false;
+        System.out.println(" ===> pattern 불일치 ... XXXXXXXXXXXXXX");
     }
+    return false;
+}
 }
